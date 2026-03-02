@@ -502,5 +502,105 @@ db.employes.deleteMany({id_employes: { $gt: 990}});
 
 
 
+// -- 1 -- Afficher la profession de l'employé 547.
+db.employes.find({ id_employes: "547" }, { _id: 0, service: 1 })
+{   service: 'commercial' }
+
+// -- 2 -- Afficher la date d'embauche d'Amandine.	
+db.employes.find({ prenom: "Amandine" }, { _id: 0, date_embauche: 1 })
+{ date_embauche : "2014-01-23" }
+
+// -- 3 -- Afficher le nom de famille de Guillaume	
+db.employes.find({ prenom: "Guillaume" }, { _id: 0, nom: 1 })
+{ nom : "Miller" }
+
+// -- 4 -- Afficher le nombre de personne ayant un n° id_employes commençant par le chiffre 5.	
+db.employes.count({ id_employes: { $regex: "^5" } })
+db.employes.count({ id_employes: /^5/ })
+3
+
+// -- 5 -- Afficher tous les employés du service commercial.
+db.employes.find({ service: "commercial" })
+// { id_employes : 388, prenom : Clement, nom : Gallet, sexe : m, service : commercial, date_embauche : 2010-12-15, salaire : 2300 }
+// { id_employes : 415, prenom : Thomas, nom : Winter, sexe : m, service : commercial, date_embauche : 2011-05-03, salaire : 3550 }
+// { id_employes : 547, prenom : Melanie, nom : Collier, sexe : f, service : commercial, date_embauche : 2012-01-08, salaire : 3100 }
+// { id_employes : 627, prenom : Guillaume, nom : Miller, sexe : m, service : commercial, date_embauche : 2012-07-02, salaire : 1900 }
+// { id_employes : 655, prenom : Celine, nom : Perrin, sexe : f, service : commercial, date_embauche : 2012-09-10, salaire : 2700 }
+// { id_employes : 933, prenom : Emilie, nom : Sennard, sexe : f, service : commercial, date_embauche : 2017-01-11, salaire : 1800 }
+
+// -- 6 -- Afficher le nombre de commerciaux.
+db.employes.count({ service: "commercial" })
+6
+
+// -- 7 -- Afficher les 5 premiers employés après avoir classé leur nom de famille par ordre alphabétique. 
+db.employes.find().sort({ nom: 1 }).limit(5)
+
+
+// -- 8 -- Afficher le nombre de recrutement sur l'année 2010.	
+db.employes.find({ date_embauche: { $regex: /^2010/ } }).count()
+2
+    // Si jamais on était en objetDate
+db.employes.find({
+        date_embauche: {
+          $gte: new Date("2010-01-01"),
+          $lte: new Date("2010-12-31")
+        }
+      }).count()
+
+// -- 9 -- Afficher tous les employés sauf ceux du service production et secrétariat.
+db.employes.find({
+  service: { $nin: ["production", "secretariat"] }
+})
+
+// -- 10 -- Afficher les commerciaux ayant été recrutés avant 2012 de sexe masculin et gagnant un salaire supérieur a 2500 €
+db.employes.find({
+    service: "commercial",
+    date_embauche: { $lt: "2012-01-01" },
+    sexe: "m",
+    salaire: { $gt: "2500" }
+  })
+//   { id_employes: '415', prenom: 'Thomas', nom: 'Winter', sexe: 'm', service: 'commercial',date_embauche: '2011-05-03',salaire: '3550'}
+        // En objetDate
+db.employes.find({
+    service: "commercial",
+    date_embauche: { $lt: new Date("2012-01-01") },
+    sexe: "m",
+    salaire: { $gt: "2500" }
+  })
+// -- 11 -- Qui a été embauché en dernier
+db.employes.find().sort({ date_embauche: -1 }).limit(1)
+// Stephanie Lafaye 
+
+// -- 12 -- Afficher les informations sur l'employé du service commercial gagnant le salaire le plus élevé
+db.employes.find({ service: "commercial" }).sort({ salaire: -1 }).limit(1)
+//   { id_employes: '415', prenom: 'Thomas', nom: 'Winter', sexe: 'm', service: 'commercial',date_embauche: '2011-05-03',salaire: '3550'}
+
+// -- 13 -- Afficher le prénom du comptable gagnant le meilleur salaire
+db.employes.find({ service: "comptabilite" } , { prenom: 1, _id: 0 }).sort({ salaire: -1 }).limit(1)
+// Fabrice
+
+// -- 14 -- Afficher le prénom de l'informaticien ayant été recruté en premier
+db.employes.find({ service: "informatique" }, { prenom: 1, _id: 0 }).sort({ date_embauche: 1 }).limit(1)
+// { "prenom" : "Mathieu" }
+
+// -- 15 -- Modifier à 2800 le salaire de l'employé 990
+db.employes.updateOne({ id_employes: "990" }, { $set: { salaire: "2800" } })
+
+// -- 16 -- Modifier le service de tous les employés masculins du service "secretariat" pour le mettre à "administration".
+db.employes.updateMany({ service: "secretariat", sexe: "m" }, { $set: { service: "administration" } })
+
+// -- 17 -- Modifier le service de l'employé avec l'ID 876 pour le mettre à "communication" et son salaire à 2800.
+db.employes.updateOne({ id_employes: "876" }, { $set: { service: "communication", salaire: "2800" } })
+
+// -- 18 -- Supprimer les employés du service administration
+db.employes.deleteMany({ service: "administration" })
+
+// -- 19 -- Supprimer tous les employés dont le nom commence par "D"
+db.employes.deleteMany({ nom: { $regex: "^D" } })
+db.employes.deleteMany({ nom: /^D/ })
+
+// -- 20 -- Supprimer tous les employés féminins du service "secretariat" avec un salaire inférieur à 1600.
+db.employes.deleteMany({ service: "secretariat", sexe: "f", salaire: { $lt: "1600" } })
+
 
 

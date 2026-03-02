@@ -261,3 +261,203 @@ db.employes.aggregate([
 // -- 8 -- Affichez le total des salaires de tous les employés embauchés chaque année.
 // -- 9 -- Affichez le nombre d'employés par sexe et par service.
 // -- 10 -- Affichez le nombre d'employés ayant un salaire supérieur à 3000 pour chaque service.
+
+// -- 1 -- Afficher le salaire moyen des informaticiens (+arrondi).
+db.employes.aggregate([
+    {
+      $match: { service: "informatique" }
+    },
+    {
+      $group: {
+        _id: null,
+        salaireMoyen: { $avg: { $toDouble: "$salaire" } }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        salaireMoyenArrondi: { $round: ["$salaireMoyen", 2] }
+      }
+    }
+  ])
+
+// -- 2 -- Afficher le coût des commerciaux sur une année.	
+db.employes.aggregate([
+    {
+      $match: { service: "commercial" }
+    },
+    {
+      $group: {
+        _id: null,
+        coutTotal: { $sum: { $multiply: [{ $toDouble: "$salaire" }, 12] } }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        coutCommerciaux: "$coutTotal"
+      }
+    }
+  ])
+
+// -- 3 -- Afficher le salaire moyen par service. (nom du service + salaire moyen arrondi)
+db.employes.aggregate([
+    {
+      $group: {
+        _id: "$service",
+        salaireMoyen: { $avg: { $toDouble: "$salaire" } }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        service: "$_id",
+        salaireMoyenArrondi: { $round: ["$salaireMoyen", 2] }
+      }
+    },
+    {
+      $sort: { service: 1 }
+    }
+  ])
+
+// -- 4 -- Afficher le salaire moyen appliqué lors des recrutements sur la période allant de 2015 à 2017
+db.employes.aggregate([
+    {
+      $match: {
+        date_embauche: {
+            $gte: "2015-01-01",
+            $lt: "2018-01-01"            
+        }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        salaireMoyen: { $avg: { $toDouble: "$salaire" } }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        salaireMoyenArrondi: { $round: ["$salaireMoyen", 2] }
+      }
+    }
+  ])
+// -- 5 -- Afficher conjointement le nombre d'homme et de femme dans l'entreprise
+db.employes.aggregate([
+    {
+      $group: {
+        _id: "$sexe",
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        sexe: "$_id",
+        count: 1
+      }
+    }
+  ])
+// -- 6 -- Afficher le salaire maximum pour chaque sexe.
+db.employes.aggregate([
+    {
+      $group: {
+        _id: "$sexe",
+        salaireMax: { $max: { $toInt: "$salaire" } }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        sexe: "$_id",
+        salaireMax: 1
+      }
+    }
+  ])
+// -- 7 -- Affichez le nombre d'employés embauchés chaque année.
+db.employes.aggregate([
+    {
+      $group: {
+        _id: { $year: { $toDate: "$date_embauche" } },
+        nombreEmployes: { $sum: 1 }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        annee: "$_id",
+        nombreEmployes: 1
+      }
+    },
+    {
+      $sort: { annee: 1 }
+    }
+  ])
+// -- 8 -- Affichez le total des salaires de tous les employés embauchés chaque année.
+db.employes.aggregate([
+    {
+      $group: {
+        _id: { $year: { $toDate: "$date_embauche" } },
+        totalSalaires: { $sum: { $toDouble: "$salaire" } }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        annee: "$_id",
+        totalSalaires: 1
+      }
+    },
+    {
+      $sort: { annee: 1 }
+    }
+  ])
+// -- 9 -- Affichez le nombre d'employés par sexe et par service.
+db.employes.aggregate([
+    {
+      $group: {
+        _id: { sexe: "$sexe", service: "$service" },
+        nombreEmployes: { $sum: 1 }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        sexe: "$_id.sexe",
+        service: "$_id.service",
+        nombreEmployes: 1
+      }
+    },
+    {
+      $sort: { sexe: 1, service: 1 }
+    }
+  ])
+// -- 10 -- Affichez le nombre d'employés ayant un salaire supérieur à 3000 pour chaque service.
+db.employes.aggregate([
+    {
+      $match: {
+        salaire: { $gt: "3000" }
+      }
+    },
+    {
+      $group: {
+        _id: "$service",
+        nombreEmployes: { $sum: 1 }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        service: "$_id",
+        nombreEmployes: 1
+      }
+    }
+  ])
+
+
+
+
+
+
+
