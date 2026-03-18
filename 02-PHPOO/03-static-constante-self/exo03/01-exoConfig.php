@@ -27,7 +27,9 @@ class Config
 
     public static function getSetting($key)
     {
-        return isset(self::$settings[$key]) ? self::$settings[$key] : null;
+        // return isset(self::$settings[$key]) ? self::$settings[$key] : null; // Ici un if ternaire 
+        return self::$settings[$key] ?? null;  // ici un isset ternaire
+
     }
 
     public static function getAppName()
