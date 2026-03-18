@@ -1,4 +1,4 @@
-<?php 
+<?php
 /* 
 
     Créez une classe Config qui contiendra :
@@ -12,11 +12,34 @@
         */
 
 
-        class Config {
+class Config
+{
+    // une const APP_NAME 
+    private const APP_NAME = "MonApplication";
+    // une prop static $settings 
+    private static $settings = array("debut" => true, "db_url" => "localhost/....");
 
-            // une const APP_NAME 
-            // une prop static $settings 
+    // 3 méthodes static, setSetting, getSetting, getAppName 
+    public static function setSetting($key, $value)
+    {
+        self::$settings[$key] = $value;
+    }
 
-            // 3 méthodes static, setSetting, getSetting, getAppName 
+    public static function getSetting($key)
+    {
+        return isset(self::$settings[$key]) ? self::$settings[$key] : null;
+    }
 
-        }
+    public static function getAppName()
+    {
+        return self::APP_NAME;
+    }
+}
+
+// Utilisation 
+echo "Nom de l'application : " . Config::getAppName() . "<br>";
+echo "Url de la database : " . Config::getSetting("db_url") . "<hr>";
+
+// Ajout d'un param dans settings avec le setter 
+Config::setSetting("db_login", "root");
+echo "Login de la database : " . Config::getSetting("db_login") . "<hr>";
