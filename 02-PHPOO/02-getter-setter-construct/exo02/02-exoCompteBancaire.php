@@ -30,7 +30,7 @@ EXERCICE :
 
 */
 
-class compteBancaire {
+class CompteBancaire {
     private $titulaire;
     private $solde;
 
@@ -91,7 +91,7 @@ class compteBancaire {
 
 }
 
-$compte = new compteBancaire("SuperPatate", 1500.00);
+$compte = new CompteBancaire("SuperPatate", 1500.00);
 
 echo "<hr></hr>";
 
