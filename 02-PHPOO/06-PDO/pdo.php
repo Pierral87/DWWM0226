@@ -211,7 +211,8 @@ echo "Nombre d'employés : " . $stmt->rowCount() . "<hr>";
             <th>Actions</th>
         </tr>
         <?php
-        // Ici la 
+        // Ici la boucle while qui execute un fetch pour chaque ligne de resultat 
+        // Chaque tour va créer une ligne de tableau 
         while ($ligne = $stmt->fetch(PDO::FETCH_ASSOC)) {
             echo "<tr>";
             foreach ($ligne as $valeur) {
@@ -252,7 +253,7 @@ echo "Nombre d'employés : " . $stmt->rowCount() . "<hr>";
         echo "<h2>05 - Requêtes de séelection pour plusieurs lignes de résultat avec fetchAll()</h2>";
 
         // fetch() permet de traiter une seule ligne à la fois ! 
-        // fetchAll() traite toutes les lignes en une seule fois sauf que ....
+        // fetchAll() traite toutes les lignes en une seule fois sauf que on reçoit un array multidimensionnel (array à deux niveaux)
 
         $stmt = $pdo->query("SELECT * FROM employes");
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
