@@ -224,23 +224,23 @@ echo "Nombre d'employés : " . $stmt->rowCount() . "<hr>";
 
         // Ici on va faire un tableau qui s'adapte sur la structure par rapport au nombre de colonnes dans la requête 
 
-    $stmt = $pdo->query("SELECT salaire, service FROM employes");
-// Il existe une méthode dans PDOStatement columnCount()
-// Elle me permet de comprendre le nombre de colonnes dans la réponse 
-// Il existe aussi une méthode getColumnMeta() qui va me retourner des informations sur une colonne demandée (par exemple la colonne numéro 0, puis 1, puis 2 etc )
+        $stmt = $pdo->query("SELECT salaire, service FROM employes");
+        // Il existe une méthode dans PDOStatement columnCount()
+        // Elle me permet de comprendre le nombre de colonnes dans la réponse 
+        // Il existe aussi une méthode getColumnMeta() qui va me retourner des informations sur une colonne demandée (par exemple la colonne numéro 0, puis 1, puis 2 etc )
 
         // echo "Nombre de colonnes dans le résultat : " . $stmt->columnCount();
         // var_dump($stmt->getColumnMeta(0));
 
 
-    echo '<table border="1" style="border-collapse : collapse; width:100%">';
-    echo "<tr>";
-    for($i = 0; $i < $stmt->columnCount(); $i++) { // Ici je combine une boucle for à compteur numérique avec columncount et getColumMeta pour générer les colonnes du tableau dynamiquement
-        $infoColonne = $stmt->getColumnMeta($i);
-        echo "<th>" . $infoColonne["name"] . "</th>";
-    }
-    echo "</tr>";
-     while ($ligne = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        echo '<table border="1" style="border-collapse : collapse; width:100%">';
+        echo "<tr>";
+        for ($i = 0; $i < $stmt->columnCount(); $i++) { // Ici je combine une boucle for à compteur numérique avec columncount et getColumMeta pour générer les colonnes du tableau dynamiquement
+            $infoColonne = $stmt->getColumnMeta($i);
+            echo "<th>" . $infoColonne["name"] . "</th>";
+        }
+        echo "</tr>";
+        while ($ligne = $stmt->fetch(PDO::FETCH_ASSOC)) {
             echo "<tr>";
             foreach ($ligne as $valeur) {
                 echo "<td>$valeur</td>";
@@ -249,34 +249,86 @@ echo "Nombre d'employés : " . $stmt->rowCount() . "<hr>";
         }
         echo "</table>";
 
-    echo "<h2>05 - Requêtes de séelection pour plusieurs lignes de résultat avec fetchAll()</h2>";
+        echo "<h2>05 - Requêtes de séelection pour plusieurs lignes de résultat avec fetchAll()</h2>";
 
-    // fetch() permet de traiter une seule ligne à la fois ! 
-    // fetchAll() traite toutes les lignes en une seule fois sauf que ....
+        // fetch() permet de traiter une seule ligne à la fois ! 
+        // fetchAll() traite toutes les lignes en une seule fois sauf que ....
 
-    $stmt = $pdo->query("SELECT * FROM employes");
-    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $pdo->query("SELECT * FROM employes");
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    var_dump($data);
+        echo "<pre>";
+        print_r($data);
+        echo "</pre>";
 
-//     array (size=25)
-//   0 => 
-//     array (size=7)
-//       'id_employes' => string '350' (length=3)
-//       'prenom' => string 'Jean-pierre' (length=11)
-//       'nom' => string 'Laborde' (length=7)
-//       'sexe' => string 'm' (length=1)
-//       'service' => string 'direction' (length=9)
-//       'date_embauche' => string '2010-12-09' (length=10)
-//       'salaire' => string '5000' (length=4)
 
-// Je veux afficher Jean-Pierre, comment est ce que j'écris ça ? 
+        //     array (size=25)
+        //   0 => 
+        //     array (size=7)
+        //       'id_employes' => string '350' (length=3)
+        //       'prenom' => string 'Jean-pierre' (length=11)
+        //       'nom' => string 'Laborde' (length=7)
+        //       'sexe' => string 'm' (length=1)
+        //       'service' => string 'direction' (length=9)
+        //       'date_embauche' => string '2010-12-09' (length=10)
+        //       'salaire' => string '5000' (length=4)
 
-echo "Premier employé de la requête : " . $data[0]["prenom"]  .  "<hr>";
+        // Je veux afficher Jean-Pierre, comment est ce que j'écris ça ? 
+
+        echo "Premier employé de la requête : " . $data[0]["prenom"]  .  "<hr>";
 
         // EXERCICE : Affichez les noms et prénoms des employés dans une liste ul li 
-            // Le faire avec fetch 
-            // Le faire avec fetchAll 
+        // Le faire avec fetch 
+        $stmt = $pdo->query("SELECT nom, prenom FROM employes");
+        echo "<ul>";
+        while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            echo "<li>" . $data["nom"] . " " . $data["prenom"] . "</li>";
+        }
+        echo "</ul>";
 
-    
+        // Le faire avec fetchAll 
+        $stmt = $pdo->query("SELECT nom, prenom FROM employes");
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        echo "<ul>";
+        foreach ($data as $employe) {
+            echo "<li>" . $employe["nom"] . " " . $employe["prenom"] . "</li>";
+        }
+        echo "</ul>";
+
+        echo "<h2>06 - Requêtes préparées pour se protéger des injections SQL ! </h2>";
+
+        // prepare() permet de sécuriser les requêtes pour éviter les injections SQL 
+        // Si dans la requête on attend une information de l'utilisateur (via un clic ou une saisie) alors OBLIGATION de faire prepare (et non pas query), dans le doute, faisons toujours prepare() pour lancer nos requêtes 
+
+        // On suppose un champ de recherche sur le nom d'un employé et une saisie récupérée ci dessous
+        $nom = "laborde"; // Je suppose ça, récupéré d'un formulaire 
+
+        // Première étape : Préparation de la requête 
+
+        // Plusieurs syntaxes possibles 
+
+        // Première syntaxe avec des "?" pour symboliser les trous dans la requête 
+        $stmt = $pdo->prepare("SELECT * FROM employes WHERE nom = ?");
+        $stmt->execute([$nom]); // On fourni dans les params du execute un array qui contient les valeurs à coller à la place de nos ? (DANS L'ORDRE)
+
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        var_dump($data);
+
+        // Cette syntaxe avec les ?, bien que rapide, manque de lisibilité...
+
+        // Par exemple sur des requêtes à nombreux param, par exemple une inscription 
+        // $stmt = $pdo->prepare("INSERT INTO employes (prenom, nom, sexe, service, salaire, date_embauche) VALUES (?, ?, ?, ?, ?, ?)");
+        // $stmt->execute([$prenom, $nom, $sexe, $service, $salaire, $date_embauche]);
+
+
+        // On préfèrera la façon utilisant des "tokens"  -- "marqueurs nominatif"
+        $stmt = $pdo->prepare("SELECT * FROM employes WHERE nom = :nom"); // On nomme les valeurs attendues par un mot précédé de ":"
+        $stmt->bindParam(":nom", $nom, PDO::PARAM_STR); // Pour chaque token, on fera une ligne de bindParam, pour lier la variable au token vide
+        $stmt->execute();
+
+        // Après, rien ne change, on fetch, on interprête et voila ! 
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        var_dump($data);
+
 
