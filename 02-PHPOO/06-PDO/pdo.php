@@ -183,4 +183,100 @@ echo "Nombre d'employés : " . $stmt->rowCount() . "<hr>";
 
     <?php endwhile;
     echo "</div>";
+
+
+    // Ici affichage en tableau html à structure fixe - façon backoffice - interface gestion admin
+    $stmt = $pdo->query("SELECT * FROM employes");
+
+    ?>
+    <br>
+    <hr></br>
+    <style>
+        th,
+        td {
+            padding: 10px;
+        }
+    </style>
+    <table border="1" style="border-collapse : collapse; width:100%">
+
+        <!-- Ici la structure fixe du tableau -->
+        <tr>
+            <th>ID employés</th>
+            <th>Prénom</th>
+            <th>Nom</th>
+            <th>Sexe</th>
+            <th>Service</th>
+            <th>Date d'embauche</th>
+            <th>Salaire</th>
+            <th>Actions</th>
+        </tr>
+        <?php
+        // Ici la 
+        while ($ligne = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            echo "<tr>";
+            foreach ($ligne as $valeur) {
+                echo "<td>$valeur</td>";
+            }
+            echo "<td>Supprimer - Modifier </td>";
+            echo "</tr>";
+        }
+        echo "</table>";
+
+        // Ici on va faire un tableau qui s'adapte sur la structure par rapport au nombre de colonnes dans la requête 
+
+    $stmt = $pdo->query("SELECT salaire, service FROM employes");
+// Il existe une méthode dans PDOStatement columnCount()
+// Elle me permet de comprendre le nombre de colonnes dans la réponse 
+// Il existe aussi une méthode getColumnMeta() qui va me retourner des informations sur une colonne demandée (par exemple la colonne numéro 0, puis 1, puis 2 etc )
+
+        // echo "Nombre de colonnes dans le résultat : " . $stmt->columnCount();
+        // var_dump($stmt->getColumnMeta(0));
+
+
+    echo '<table border="1" style="border-collapse : collapse; width:100%">';
+    echo "<tr>";
+    for($i = 0; $i < $stmt->columnCount(); $i++) { // Ici je combine une boucle for à compteur numérique avec columncount et getColumMeta pour générer les colonnes du tableau dynamiquement
+        $infoColonne = $stmt->getColumnMeta($i);
+        echo "<th>" . $infoColonne["name"] . "</th>";
+    }
+    echo "</tr>";
+     while ($ligne = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            echo "<tr>";
+            foreach ($ligne as $valeur) {
+                echo "<td>$valeur</td>";
+            }
+            echo "</tr>";
+        }
+        echo "</table>";
+
+    echo "<h2>05 - Requêtes de séelection pour plusieurs lignes de résultat avec fetchAll()</h2>";
+
+    // fetch() permet de traiter une seule ligne à la fois ! 
+    // fetchAll() traite toutes les lignes en une seule fois sauf que ....
+
+    $stmt = $pdo->query("SELECT * FROM employes");
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    var_dump($data);
+
+//     array (size=25)
+//   0 => 
+//     array (size=7)
+//       'id_employes' => string '350' (length=3)
+//       'prenom' => string 'Jean-pierre' (length=11)
+//       'nom' => string 'Laborde' (length=7)
+//       'sexe' => string 'm' (length=1)
+//       'service' => string 'direction' (length=9)
+//       'date_embauche' => string '2010-12-09' (length=10)
+//       'salaire' => string '5000' (length=4)
+
+// Je veux afficher Jean-Pierre, comment est ce que j'écris ça ? 
+
+echo "Premier employé de la requête : " . $data[0]["prenom"]  .  "<hr>";
+
+        // EXERCICE : Affichez les noms et prénoms des employés dans une liste ul li 
+            // Le faire avec fetch 
+            // Le faire avec fetchAll 
+
     
+
