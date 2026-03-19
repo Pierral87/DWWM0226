@@ -20,12 +20,15 @@ Structure de base des exceptions :
                 Appels API
                 Connexion/Requête vers BDD 
 
-*/ 
+*/
 
 function diviser($nbr1, $nbr2)
 {
+    if (!is_numeric($nbr1) || !is_numeric($nbr1)) {
+        throw new Exception("On ne peut diviser que des types numériques !");
+    }
 
-    if ($nbr2 == 0) {
+    if ($nbr2 == 0) { // Cas d'erreur, division par zero
         // trigger_error("Erreur pas de division par zero ! ", E_USER_ERROR); // Je peux déclencher une erreur simple php avec trigger error
         throw new Exception("Division par zéro interdite !"); // Mais je peux aussi déclencher une erreur en "lançant" une exception, je pourrais l'attraper plus tard via le bloc try/catch 
     }
@@ -36,29 +39,29 @@ function diviser($nbr1, $nbr2)
 
 
 try {  // Dans le bloc try "j'essaye" du code 
-// Si tout va bien dans le bloc try, je passe à la suite, je ne rentrerai pas dans le bloc catch
-echo diviser(10, 2);
-echo diviser(10, 0); // Ici problème ! Cas d'erreur, lancement d'exception, je vais aterrir dans le bloc catch 
-} catch(Exception $e) {
+    // Si tout va bien dans le bloc try, je passe à la suite, je ne rentrerai pas dans le bloc catch
+    echo diviser(10, 2);
+    echo diviser(10, 0); // Ici problème ! Cas d'erreur, lancement d'exception, je vais aterrir dans le bloc catch 
+} catch (Exception $e) {
 
-// J'arrive ici si une exception est lancée au travers du bloc try et j'ai accès à diverses informations sur l'erreur (l'exception) à l'intérieur du paramètres $e qui reçoit l'exception lancée 
+    // J'arrive ici si une exception est lancée au travers du bloc try et j'ai accès à diverses informations sur l'erreur (l'exception) à l'intérieur du paramètres $e qui reçoit l'exception lancée 
 
-// var_dump($e);
-// var_dump(get_class_methods($e));
+    // var_dump($e);
+    // var_dump(get_class_methods($e));
 
-// On remarque dans le var_dump différentes informations, telles que, le message d'erreur, la ligne de lancement d'exception ainsi que la trace
-// La trace c'est les détails de l'erreur rencontrée
+    // On remarque dans le var_dump différentes informations, telles que, le message d'erreur, la ligne de lancement d'exception ainsi que la trace
+    // La trace c'est les détails de l'erreur rencontrée
 
-echo "<h3>Attention erreur, problème de code </h3>";
-echo "Erreur : " . $e->getMessage();
-echo "Erreur : " . $e->getTraceAsString();
+    echo "<h3>Attention erreur, problème de code </h3>";
+    echo "Erreur : " . $e->getMessage();
+    echo "Erreur : " . $e->getTraceAsString();
 
-// Souvent, après être tombé dans un catch, je stoppe l'exécution du code avec un exit ou un die 
-// exit; 
-// die;
+    // Souvent, après être tombé dans un catch, je stoppe l'exécution du code avec un exit ou un die 
+    // exit; 
+    // die;
 
 
-// Si je ne stoppe pas le code, je suis libre de poursuivre ! Malgré cette erreur (alors qu'une fatal error stoppe forcément l'exécution du code)
+    // Si je ne stoppe pas le code, je suis libre de poursuivre ! Malgré cette erreur (alors qu'une fatal error stoppe forcément l'exécution du code)
 }
 
 
