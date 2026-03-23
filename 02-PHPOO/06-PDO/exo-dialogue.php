@@ -2,6 +2,40 @@
 
 /*
 
+// Pour éviter les injections XSS (du code css et/ou js mis dans les commentaires)
+// il est possible de modifier les carac notamment les < > qui représentent des balises.
+// à l'affichage (voir en bas de page) on appelle htmlspecialchars() qui permet de transformer ces caractères problématiques en entités html
+// exemple :
+// Là une boucle infinie qui lance un alert 
+// <script>while(true){alert('truc');}</script>
+// sera écrit dans le code source sous cette forme :
+// &lt;script&gt;while(true){alert('truc');}&lt;/script&gt;
+
+// On pourrait aussi injecter du code css, là le body n'apparait plus
+// <style>body{display:none;}</style>
+
+// Outils proche de htmlspecialchars() : htmlentities() / strip_tags()
+
+
+// Pour tester les injections SQL, depuis le champ message 
+// pour injection SQL ', ''); DROP DATABASE dialogue;
+// ou 
+// pour injection SQL ', NOW()); DROP DATABASE dialogue;
+
+// Depuis le champ pseudo 
+// pour injection SQL ', '', NOW()); DELETE FROM commentaire;
+
+// ', '', NOW()); DO SLEEP(10);  injection en aveugle, permet de voir si l'injection est possible en mettant un temps de délais à la requete (on remarque le chargement, comme ça, même sans message d'erreur on peut comprendre que le système est sensible aux injections)
+
+
+// Là avec wamp, on peut généralement accéder au dossier tmp/temp d'un serveur, on en profite pour utiliser l'instruction SELECT INTO OUTFILE MySQL pour enregistrer dans un fichier txt une selection (par exemple le contenu d'une table user)
+// Pour insérer dans un fichier.txt   la selection d'une table via injection 
+// ', NOW()); SELECT * INTO OUTFILE 'c:/wamp64/tmp/fichier2.txt' FROM commentaire; #
+
+// Ensuite on réinsère dans la table visible pour nous (ici commentaire), pour voir le détails de tous les users ( et peut être les password s'ils ne sont pas hashé en bdd aie aie aie)
+// ', NOW()); INSERT INTO commentaire (pseudo, message, date_enregistrement) VALUES ('1', LOAD_FILE('c:/wamp64/tmp/fichier2.txt'), NOW());
+
+// On gardera donc en tête de TOUJOURS envoyer nos requêtes avec prepare() pour nous protéger des injections, SINON, l'entièreté de notre base est compromise !
 
 TP Espace de Tchat :
 -----------
@@ -32,7 +66,7 @@ TP Espace de Tchat :
 - 10 - Amélioration du css
 */
 
-// ', NOW()); INSERT INTO commentaire (pseudo, message, date_enregistrement) VALUES ('1', LOAD_FILE('c:/wamp64/tmp/testrecup.txt'), NOW());
+
 
 
 // Etape 02 : Créer une connexion à cette base avec PDO 
@@ -54,6 +88,7 @@ try {
 
 // var_dump($pdo);
 
+// Déclaration de nos variables à vide, toujours une bonne pratique ! Nous évite les erreurs undefined variable
 $pseudo = "";
 $message = "";
 $req = "";
@@ -62,10 +97,12 @@ $msgError = "";
 // - 04 - Récupération des saisies du form avec controle 
 var_dump($_POST);
 
+// Ici pour s'assurer que le form est bien saisie et non manipulé 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["pseudo"], $_POST["message"])) {
         $pseudo = trim($_POST["pseudo"]);
         $message = trim($_POST["message"]);
 
+        // Chaque cas d'erreur insère une valeur dans $msgError pour afficher les messages d'erreur
         if (empty($pseudo) || empty($message)) {
                 $msgError .= '<div class="alert alert-danger" role="alert">Veuillez saisir tous les champs !</div>';
         }
@@ -84,9 +121,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["pseudo"], $_POST["mess
 
         // On peut envoyer la requête avec query mais on aura des failles de sécurité face aux injections SQL
         
-
+        // S'il n'y a pas de contenu dans $msgError alors tous mes contrôles sont OK et je peux insérer 
         if (empty($msgError)) {
                 // $stmt = $pdo->query($req);
+                // Toute opération vers une bdd se lance au travers d'un try catch et ici surtout avec un prepare() pour éviter les injections 
                 try {
                         $stmt = $pdo->prepare("INSERT INTO commentaire (pseudo, message, date_enregistrement) VALUES (:pseudo, :message, NOW())");
                         $stmt->bindParam(':pseudo', $pseudo, PDO::PARAM_STR); // Ici on bind les :pseudo et :message avec les valeurs de $pseudo et $message
@@ -102,7 +140,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["pseudo"], $_POST["mess
 
 
 // - 06 - Requete de récupération des messages afin de les afficher dans cette page 
+// Ici pas obligatoire de faire un prepare car pas d'information de l'utilisateur dans la requête (pas de saisies ou clic qui declenchent cette action)
 $stmt = $pdo->query("SELECT pseudo, message, date_format(date_enregistrement, '%d/%m/%Y à %T') AS date_fr FROM commentaire ORDER BY date_enregistrement DESC");
+
+// On fetchAll pour récupérer la totalité des messages dans une seule variable 
 $commentaires = $stmt->fetchAll(PDO::FETCH_ASSOC); // Ici dans $commentaires grâce à fetchAll, j'ai tout mes messages, je vais aller les afficher plus bas 
 
 // var_dump($commentaires);
@@ -155,6 +196,7 @@ $commentaires = $stmt->fetchAll(PDO::FETCH_ASSOC); // Ici dans $commentaires gr�
                                 <form method="POST" class="mt-5 mx-auto w-50 border p-3 bg-white">
                                         <!-- On affiche la requête SQL que l'on lance (pour les tests futurs) -->
                                         <?= $req; ?>
+                                        <!-- On affiche ici les messages d'erreurs -->
                                         <?= $msgError; ?>
                                         <hr>
                                         <div class="mb-3">
@@ -179,14 +221,16 @@ $commentaires = $stmt->fetchAll(PDO::FETCH_ASSOC); // Ici dans $commentaires gr�
                         <div class="col-12">
                                 <p class="w-75 mx-auto mb-3">Il y a : <?= count($commentaires) ?> messages dans la bdd</p>
                                 <?php
+                                // On boucle sur notre array contenant tous les commentaires, chaque tout de boucle foreach représente la manipulation et l'affichage d'un seul commentaire 
                                 foreach ($commentaires as $commentaire) : ?>
 
                                         <div class="card w-75 mx-auto mb-3">
                                                 <div class="card-header bg-dark text-white">
-                                                        Par : <?= $commentaire["pseudo"] ?>, le : <?= $commentaire["date_fr"] ?>
+                                                        <!-- htmlspecialchars pour ne pas interpréter le code html/css/js -->
+                                                        Par : <?= htmlspecialchars($commentaire["pseudo"]) ?>, le : <?= htmlspecialchars($commentaire["date_fr"]) ?>
                                                 </div>
                                                 <div class="card-body">
-                                                        <p class="card-text"><?= $commentaire["message"] ?></p>
+                                                        <p class="card-text"><?= htmlspecialchars($commentaire["message"]) ?></p>
                                                 </div>
                                         </div>
 
