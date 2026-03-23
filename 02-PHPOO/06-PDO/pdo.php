@@ -289,10 +289,10 @@ echo "Nombre d'employés : " . $stmt->rowCount() . "<hr>";
 
         // Le faire avec fetchAll 
         $stmt = $pdo->query("SELECT nom, prenom FROM employes");
-        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $employes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         echo "<ul>";
-        foreach ($data as $employe) {
+        foreach ($employes as $employe) {
             echo "<li>" . $employe["nom"] . " " . $employe["prenom"] . "</li>";
         }
         echo "</ul>";
